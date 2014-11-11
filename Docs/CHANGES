@@ -1,0 +1,273 @@
+0.13Beta->0.13 (Jun 12 2006) 
+--------------
+-- Fixed SHA1 implementation
+-- Fixed some compilation problems with all options
+-- Code enhancements (a lot of failures has been corrected)
+
+0.12->0.13Beta (December 06 2005)
+--------------
+-- Removed unused function definitions
+-- Added /dev/mem protection
+
+
+0.11->0.12 (October 10 2005)
+--------------
+-- New project manteiner:  Rodrigo Rubira Branco (rodrigo@kernelhacking.com)
+-- Changed the code structure (added src/ Docs/ includes/ objs/ bin/)
+-- Fixed some compiling problems (when you doesnt use CHECKSUM support)
+-- Fixed many kpanics conditions (and market others into Docs/KNOW_BUGS)
+-- Fixed some values into ./configure script when you use ext3 filesystems (dont exist /proc entries)
+-- Added grub sample at README.initrd
+-- Some functions definitions doesnt exist when some ./configure options arent choosed (this causes a lot of oops into the running system)
+-- Added /lib/modules/`uname -r` in the list of files to be immutable in a linux
+install (README.Immutable)
+-- Added MBR integrity checks that can prevent from GRUB modifications (in conjunction of really immutable into the /boot/grub files)
+
+0.10->0.11
+--------------
+
+-- Addition of Self Integrity Checks to Detect Attacks
+   Against StMichael Himself/Itself.. whichever.
+   
+-- Addition of configuration options to hard-code memory
+   offsets into the source instead of discovery during
+   load time. This permits the loading of Stmichael from
+   an initrd, before init spawns and the filesystems are
+   mounted.
+
+   See Readme.initrd for information on how to load StMichael
+   from an initrd.
+
+-- Assordted Modifications and Varable Name changes to
+   permit easier migration of code between projects.
+
+-- Addition of Goals for Next Version. See TODO
+
+0.09->0.10
+--------------
+
+-- Cleanup the multitude of compilation options, and re-do the
+   definitions to make a more sane set of options. This will
+   resolve some problems where certin sets of compile time
+   options may cause the compile to fail -- or even cause the
+   module to Oops on load.
+
+   Of note:
+
+      * Stand Alone Support for Really-Immutable Filesystem.
+      * Stand Alone Support for Read-Only KMEM
+      * Module-List monitoring is done by default now.
+      * StMichael will actually work with checksumming turned
+        off. (This is to support the GNU lisence terms)
+
+-- Really Immutable filesystem support for ext3 fs added.
+
+-- Added in Kernel Lisencing Code to Identify the Kernel Lisence
+   for Newer kernels. No more Tainted Kernels. 
+
+-- Updated Configure Script to reflect changes in the compile time
+   options. Also, better guessing of where the proper include
+   files will be found -- should reduce confusion on standard
+   mandrake and redhat systems.
+
+-- Updated instructions on configuration with notes on known issues.
+
+-- Backup kernel is now obscured from string searches using the weak
+   crypt function.
+
+-- Added needed modifications to support the newer Alan Cox Kernels,
+   with the diffrent VM system.
+
+-- A list has been created for Announcements, Questions, Discussion
+   regarding StMichael, StJude, and System Survivability in General.
+
+   http://lists.sourceforge.net/lists/listinfo/stjude-project
+
+  
+
+0.08->0.09
+-------------
+
+Internal Version - Not Released. Changes rolled up into 0.10.
+
+0.07->0.08
+--------------
+
+-- If attacks are noticed during a interupt, the notice
+   must be queued. We can not do output during an interupt. 
+                           -- Refrence: Unk. [1] 
+
+-- Under some circumstances, we could OOPS on a derefrence
+   of NULL when checking for self-concealing modules during
+   delete_module syscall.
+                           -- Refrence: Junichi Murakami 
+
+-- Addition of Checks to detect the possible subversion of
+   the kernel at loadtime.
+                           -- Refrence: Junichi Murakami 
+
+-- Full Kernel Text Validation
+
+       Validate the full text of the kernel, this permits
+       arbitrary modifications to the kernel text from going
+       unnoticed, such as modification of the system_call function
+       to call system calls from an alternate (and invisable) system
+       call table.
+
+       
+
+-- Kernel Restore Option
+
+       This permits recovery from catastrophic attacks, such
+       as a silvio stealth-syscall attack that actually modifies
+       portions of the kernel text. 
+
+       The Kernel's code is backed up, and when a compromise of
+       the text is detected, the old text is reloaded.
+
+       Concept and concept code by Junichi Murakami.
+
+       ** Note: This should be considered VERY experimental
+          for the time being, as this is much akin to performing
+          open heart surgery upon oneself without anastesia.
+
+
+[1] In the time since correspondence, I have been daft enough to
+    misplace the email address and name. I apoligize, and if you 
+    wish to re-contact me, I will update this entry. 
+
+0.06->0.07
+--------------
+
+-- Serious bug could cause a kernel Oops, and segv of insmod  
+   when StMichael.o was loaded after other kernel modules.  
+
+
+
+0.05->0.06
+---------------
+
+-- New email address, lawless@wwjh.net. lawless@netdoor.com
+   still works, for the time being.
+
+-- Began Code and Signature Obfsication work.
+
+-- Introduced perminate immutability to files
+   on ext2 fs (like bsd securelevel 1, immutable files
+   may not be made unimmutable)
+
+-- Configuration Script Cleanups, and other Misc code beautification.
+   (including notes on the odd redhat timer_t behavior)
+
+0.04->0.05
+---------------
+
+-- Added Checks to Detect modules hiding their presence.
+     And try to reveal them. ie, Anti-Cloaking.
+
+-- Added Read-Only /dev/kmem
+     Avoid programs patching the kernel real-time without
+     going through the modules interface. ;)
+
+-- Added VFS checking.
+     Beginning of checks to validate the VFS. Instead
+     of replacing the system calls, why not attack VFS?
+
+     I don't think so.
+
+0.03->0.04
+----------------
+
+-- Added the SHA1 checksum to complement the md5 checksumming.
+
+   There was some concern voiced that there oould possibly be
+   birthday attacks. By using two checksumming functions we
+   reduce the likelyhood of such an occurance.
+
+-- Added Timers
+
+   Perodicly revalidate the kernel. This is done via a Timer
+   and by wrapping the exit call to call the integrity checking
+   routines.
+
+   Timer Code Submitted by MixMan <mixman@langusta.starnet.pl> 
+
+   Refrence: timer_attack.c in DEMO_ATTACKS Directory
+
+-- Added Configuration Script.
+
+   Configuration Script Submitted by by MixMan <mixman@langusta.starnet.pl> 
+-- Code Cleanup to Accomidate future inclusion in the StJude_LKM
+-- Inclusion of Demo Modules that will trigger the StMichael
+   LKM. 
+
+   *** WARNING: USE OF THESE MODULES COULD CAUSE YOUR COMPUTER 
+                TO REBOOT. YOU KNOW WHAT THIS IMPLIES.
+
+                USE THESE DEMO MODULES AT YOUR OWN RISK.
+
+-- Silent mode is Disabled by Default. It is Recommended that
+   The Silent Mode be Re-Enabled Before Deployment, and After Testing.
+
+-- The Beginning of Dependency Checking for All Kernel symbols. 
+   Only Selected functions are being validated at this moment. 
+   Future Releases will build the module to include all major
+   functions. 
+
+   This detects attacks against the integrity of the function
+   itself.
+
+   Refrence: printk_attack.c in DEMO_ATTACKS Directory.
+
+
+
+0.02->0.03
+-----------------
+
+
+-- Added md5 checksums to contens of the systemcalls themselves
+
+         This will enable the code that performd MD5 checksums on the
+         first part of each systemcall to verify that the syscall 
+         has not been attacked as described in the paper listed below.
+
+         http://www.big.net.au/~silvio/stealth-syscall.txt
+
+         One may wish to disable this, but for what reason, I can
+         not grasp. The md5.c file is not covered under the GNU 
+	 lisence, and thusly is optional.
+
+         Noted, along with suggection for resolution
+         by Frederic Raynal <Frederic.Raynal@inria.fr> 
+
+         The MD5 code used is housed on the web at:
+ 
+ -- Added cloaking to hide the presence of StMichael, and its
+    symbols
+
+         This next option causes the module to hide itself and all 
+	 of its symbols.  Without this it is possible for an intruder 
+	 to easily identify the  datastructure we hold our valid 
+	 values in, and modify them to pass our checks. 
+
+	 The Silent mode is also enabled to quelch any output to klogd
+	 regarding our actions. Since the intruder has root, they
+	 can see everything that comes out of the logs. 
+
+	 Since StMichael cause the rootkits to not work as expected,
+	 we do not want to give away any usefull debugging information ;)
+
+	 Possibility of Attack via This means identified 
+         by Frederic Raynal <Frederic.Raynal@inria.fr> 
+	
+	 Attack Demo and further explanation of Vulnrability identified by
+	 MixMan <mixman@langusta.starnet.pl> 
+
+
+0.01->0.02
+-----------------
+
+  -- Inverted match could cause kernel to hang
+     on attempt to unload StMichael. Fixed.
+
+

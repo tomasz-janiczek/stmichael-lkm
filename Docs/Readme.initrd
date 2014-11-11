@@ -1,0 +1,108 @@
+Loading StMichael or StJude from Initrd.
+
+--------------------------------------------------------------------------------
+
+Q: Why load StMichael or StJude from initrd?
+
+
+A: The way St. Michael and St. Jude function requires them to load
+   early in the boot process, in order to protect the system from 
+   hostile acts. The earlier in the boot process they load, the better.
+
+   In some situations, particularly where /bin/init may in itself be trojaned,
+   it would be necessary to load prior to init spawning. Within linux, the the
+   only way to load a kernel module prior to init spawning is thru the initrd.
+
+   *--------------------------------------------------------------------*
+   | For more information on what initrd (inital ramdisk) is, and how   | 
+   | its used in linux, refer to initrd.txt in the linux kernel         |
+   | Documentation directory.                                           |
+   *--------------------------------------------------------------------*
+  
+   By loading thru the initrd, we can easily detect malicious activity 
+   by those programs which load before StMichael or StJude. 
+
+   Additionally, on systems allready compromised by a kernel level rootkit,
+   an pre-built[1] initrd can be loaded on the system thru the lilo (or
+   grub) interface. By doing this, StMichael would load before the kernel
+   rootkit and be able to detect it -- speeding the recovery from a kernel
+   roootkit compromise.
+
+   
+--------------------------------------------------------------------------------
+   
+Loading StMichael or StJude thru Initrd.
+
+******************************************************************
+** Note: If doing this for StJude, you must do this for the     **
+** LEARNING run as well as the production run. The reason being **
+** that LEARNING should occur in the exact same configuration   ** 
+** that production will be run in.                              **
+******************************************************************
+
+1. Configure Compile the Modules with the symbol extraction.
+
+   (Ya know, that ./configure && make thing. )
+
+2. Copy the module, StMichael or StJude, into your 
+   /lib/modules/`uname -r`/kernel directory.
+
+3. Run "depmod -a"
+
+4. Change directory to your /boot directory
+
+5. Run mkinitrd, supplying StJude_lkm or StMichael_lkm in 
+   a "--with" argument:
+
+   example:
+
+   mkinitrd --with StMichael_lkm initrd-sm.img `uname -r`
+
+6. Modify Lilo or Grub to use the initrd.
+
+   Lilo Example:
+
+   prompt
+   timeout=50
+   default=linux-with-stmichael
+   boot=/dev/hda
+   map=/boot/map
+   install=/boot/boot.b
+   message=/boot/message
+   linear
+
+   image=/boot/2.4.19-pre1/vmlinuz
+	label=linux-without-stmichael
+	read-only
+	root=/dev/hda6
+	append="hdc=ide-scsi"
+   
+   image=/boot/2.4.19-pre1/vmlinuz
+	label=linux-with-stmichael
+	read-only
+	root=/dev/hda6
+	append="hdc=ide-scsi"
+        initrd=/boot/2.4.19-pre1/initrd-sm.img
+
+   Note: See makeboot-lilo.sh for an example on how this can be done.
+
+   Grub Example (menu.lst):
+
+	default 	0
+	timeout		50
+	color	cyan/blue white/blue
+
+	title           StMichael Modified Kernel
+	root            (hd0,4)
+	kernel          /boot/vmlinuz-2.4.31 root=/dev/hda5 ro
+	initrd          /boot/initrd.img-2.4.31
+	savedefault
+	boot
+
+	title 		Original Distro Kernel
+	root		(hd0,4)
+	kernel		/boot/vmlinuz-2.4.31 root=/dev/hda5 ro
+	savedefault
+	boot	
+
+7. Reboot

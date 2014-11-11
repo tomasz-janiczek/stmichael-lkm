@@ -1,0 +1,502 @@
+#!/bin/sh
+StMichael_Ref="includes/StMichael_Ref.h"
+VERSION="0.13"
+CC="kgcc"
+DFLAGS=
+RESPONSE_PROG="/bin/false"
+RESPONSE_UID="65535"
+MFLAGS=
+LOAD=
+RE=
+
+clear;
+echo -e "\t\t\t*** Saint Michael Linux Kernel Module $VERSION ***\n\n"
+echo -e "This script will walk you through the configuration of features"
+echo -e "for the StMichael Linux Kernel Module.\n"
+echo -e "The selections for each question are marked in ()'s.\n"
+echo -e "The Default selection is Capitolized.\n"
+
+read -p "--=={ Press Enter to Continue. }"
+clear;
+
+echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+One option in the Saint Michael code is to perform MD5 checksumming on
+critical functions of Saint Michael and Kernel. This consumes a little
+additonal CPU time, but is used to detect attacks where a hostile entity
+attemtps to re-write functions within the running kernel to install
+a backdoor or disable Saint Michael.
+
+Do you want to use the additional Checksumming Code in StMichael?
+
+Say (Y)es if you want the additional safety of checksumming the 
+          kernel and can spare some additional cpu load.
+Say (N)o  if you do not want the additional checksumming code. 
+
+"
+read -p "Include Checksumming of Kernel Functions  (Y)es/(n)o ? " RE
+if  [ "$RE" == "N" ] || [ "$RE" == "n" ] || [ "$RE" == "normal" ]; then
+echo -e ""
+else
+DFLAGS="$DFLAGS -DUSE_CHECKSUM"
+MODE="CHECKSUM";
+fi   
+
+read -p "--=={ Press Enter to Continue. }"
+clear;
+
+
+echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+One option in the Saint Michael code is to perform SHA1 checksumming on
+critical functions of Saint Michael and Kernel. This consumes a little
+additonal CPU time, but is used to detect attacks where a hostile entity
+attemtps to re-write functions within the running kernel to install
+a backdoor or disable Saint Michael.  Also, colisions into SHA1 hashs are more difficulty to exist, using both, SHA1 and MD5 its look like to be impossible.
+
+Do you want to use the additional Checksumming Code in StMichael?
+
+Say (Y)es if you want the additional safety of checksumming the 
+          kernel and can spare some additional cpu load.
+Say (N)o  if you do not want the additional checksumming code. 
+
+"
+read -p "Include Checksumming of Kernel Functions  (Y)es/(n)o ? " RE
+if  [ "$RE" == "N" ] || [ "$RE" == "n" ] || [ "$RE" == "normal" ]; then
+echo -e ""
+else
+DFLAGS="$DFLAGS -DUSE_SHA1"
+MODE="CHECKSUM";
+fi   
+
+read -p "--=={ Press Enter to Continue. }"
+clear;
+
+
+#
+# Begin checksum Questions.
+#
+if [ "$MODE" == "CHECKSUM" ]; then
+
+	echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+Some ways that exist to an intruder change the code at MBR to load an arbitrary kernel or initrd, deactivating StMichael in this way.
+
+If you enable this option, StMichael will do checksum the MBR code to prevent this condition, rebooting or halting the system if it occurs.
+
+Say (Y)es if you want Stmichael to check the MBR against any changes
+Say (N)o if you dont want these checks
+"
+	read -p "Include MBR Checks Functionality (Y)es/(n)o ? " RE
+
+	if  [ "$RE" == "N" ] || [ "$RE" == "n" ] || [ "$RE" == "no" ]; then
+		echo -e "";
+	else
+		DFLAGS="$DFLAGS -DMBRCHECK"
+	fi
+
+	clear;
+
+	echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+If the it is detected that the kernel has been modified, it may not
+be possible to recover the kernel and maintain the system's integrity.
+In these cirumstances it is adviseable to reboot the system to load
+the kernel from disk.
+
+If it is determined via the checksumming of kernel functions that the kernel
+has been modified, the Saint Michael module can reboot the system after syncing
+the filesystems. If the system can not be safely rebooted, then the system
+would be halted.
+
+Even if silent mode is selected, these events will generate output into the
+systemlog to identify that something is seriously amiss.
+
+Should the system be rebooted or halted if the integrity is lost completely?
+
+Say (Y)es if you want Saint Michael to reboot the system when its determined
+          that the kernel has been attacked in such a way that can not
+          be recovered. 
+Say (N)o  if you do not want the this functionality. 
+"
+	read -p "Include Emergency Reboot Functionality (Y)es/(n)o ? " RE
+
+	if  [ "$RE" == "N" ] || [ "$RE" == "n" ] || [ "$RE" == "no" ]; then
+	echo -e "";
+	else
+	DFLAGS="$DFLAGS -DROBINSON"
+	ROBINSON="Y"
+	fi
+
+	read -p "--=={ Press Enter to Continue. }"
+	clear;
+
+	if [ "$ROBINSON" == "Y" ]; then
+		#
+		# Backup Kernel
+		#
+		#
+		echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+When a cataclismic modification to the kernel is made, the 
+default action will be to reboot the system. However, in some
+cases this may not be the case. We can generate a backup of
+the kernel, to be used in such a situation. Then, upon detection
+of a cataclismic modification to the kernel, Saint Michael
+can reload the kernel from this backup.
+
+NOTE: This is very experimental, and could (in theory) lock
+      the system. However, for thigs to get to this point, the
+      situation must allready be quite bleak.
+
+NOTE: This is NOT recommended for systems with less then 128Megs 
+      of RAM.
+      
+Do you want Saint Michael to Save a backup of the kernel for later use?
+"
+		read -p "Save a copy of the kernel for later use? (Y)es/(n)o ? " RE
+
+		if  [ "$RE" == "N" ] || [ "$RE" == "n" ] || [ "$RE" == "no" ]; then
+			echo -n "";
+		else
+			DFLAGS="$DFLAGS -DBACKUP_KERNEL";
+		fi # of Test IF.
+	fi # of ROBINSON
+	read -p "--=={ Press Enter to Continue. }"
+	clear;
+	#
+	# End Checksum Questions
+	#
+
+	echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+It is possible for some linux kernel modules to conceal files via
+means other then replacing systemcalls. This can be done by
+actually replacing portions of the VFS that handle requests
+from the system calls for information from the filesystem. 
+
+An example may be replacing the read function for directory opperations
+to hide the presence of a subdirectory that contains a magic text
+string. Checks against the system call table would reveal no
+changes, but the files have been concealed.
+
+We can perform some basic checks to catch this type of activity.
+In some circumstances it may not be repaired, but notification can
+be made of its occurance.
+
+"
+
+	read -p "Do you want to monitor changes to the VFS layer? (Y)es/(n)o? " RE
+	if  [ "$RE" == "N" ] || [ "$RE" == "n" ] || [ "$RE" == "no" ]; then
+		echo -n ""
+	else
+		DFLAGS="$DFLAGS -DFSCHECK"
+	fi
+	read -p "--=={ Press Enter to Continue. }"
+
+fi
+clear;
+
+echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+Even if the kernel is protected, it is possible for malicious
+software to modify or replace key on-disk files that are used during 
+the boot process. 
+
+Normally, one can set these files to be immutable, that is they may not
+be modified -- even by root. This immutable setting, though, may be removed
+by the root account or any process posessing the immutable capability.
+
+Saint Michael can modify the unerlying filesystem support so that
+immutable flags may not be removed from files once set. 
+
+If this option is selected, it will be necessary to boot into single-user
+mode prior to upgrading any software, or modifying any configs that are
+set immutable. 
+"
+
+read -p "Do you want to Immutable files to be Really Immutable? (Y)es/(n)o? " RE
+if  [ "$RE" == "N" ] || [ "$RE" == "n" ] || [ "$RE" == "no" ]; then
+	echo -n ""
+else
+	DFLAGS="$DFLAGS -DREALLY_IMMUTABLE"
+	echo 
+fi
+read -p "--=={ Press Enter to Continue. }"
+clear;
+echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+\t\t\t*** NOTE ON IMMUTABLE FILE SUPPORT ***
+
+It is recommended that the installer read the file, README.Immutable
+for a list of files that may need to be set to be immutable. 
+
+This list is based on a standard redhat configuration, other distributions
+may need diffrent files to be set immutable to protect the boot process.
+
+You are encouraged to experiment and find the optimal set of immutable
+files for your needs.
+
+"
+read -p "--=={ Press Enter to Continue. }"
+
+clear;
+
+echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+For some opperations that should become active very quickly, 
+such as Immutable file support and read only kmem, we can
+extract the symbol addresses from a System.map file for the
+running system. This moves the task of discovering the address
+out of StMichael, and into this configure script.
+
+This support may also be of use on embedded systems, where
+filesystems may pivot after StMichael startup. However, if
+this option is chosen, StMichael would have to be built on
+each system it is deployed on -- as it would become tied
+to the system it was compiled on.
+
+If unshure, say No.
+"
+
+read -p "Do you want this script to extract symbols for StMichael? (N)o/(y)es? " RE
+if  [ "$RE" == "Y" ] || [ "$RE" == "y" ] || [ "$RE" == "yes" ]; then
+	SYMGRAB="yes"
+	echo 
+fi
+read -p "--=={ Press Enter to Continue. }"
+clear;
+#
+# Cloaking
+#
+#
+echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+To further complicate the process of attacking StMichael, it is
+possible to hide Saint Michael's symbols from the kernel and other
+modules. 
+
+This will cause StMichael to no longer showup in a lsmod command,
+and its symbols will not be visable via /proc/ksyms.
+
+Do you want Saint Michael to hide itself upon loading?
+"
+read -p "Hide Saint Michael's Symbols upon loading? (Y)es/(n)o ? " RE
+
+if  [ "$RE" == "N" ] || [ "$RE" == "n" ] || [ "$RE" == "no" ]; then
+	echo -n "";
+else
+	DFLAGS="$DFLAGS -DCLOAK"
+fi
+
+read -p "--=={ Press Enter to Continue. }"
+clear;
+
+echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+The /dev/kmem device provides a device interface to read and
+write kernel memory. 
+
+There are ways by which a hostile entitiy may directly load coad
+into the kernel by writing to /dev/kmem. Under normal circumstances
+write access to this device is only necessary for the loading of
+kernel module. 
+
+We can manage write access to this device to permit kernel modules
+to load properly, but prohibt write access during all other times.
+
+"
+read -p "Do you want to limit write access to the /dev/kmem device? (Y)es/(n)o ?" RE
+
+if  [ "$RE" == "N" ] || [ "$RE" == "n" ] || [ "$RE" == "no" ]; then
+	echo -n ""
+else
+	DFLAGS="$DFLAGS -DROKMEM"
+fi
+
+read -p "--=={ Press Enter to Continue. }"
+clear;
+
+echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+The /dev/mem device provides a device interface to read and
+write system memory (including the kernel memory). 
+
+There are ways by which a hostile entitiy may directly load coad
+into the kernel by writing to /dev/mem. 
+
+We can manage write access to this device to permit kernel modules
+to load properly, but prohibt write access during all other times.
+
+"
+read -p "Do you want to limit write access to the /dev/mem device? (Y)es/(n)o ?" RE
+
+if  [ "$RE" == "N" ] || [ "$RE" == "n" ] || [ "$RE" == "no" ]; then
+	echo -n ""
+else
+	DFLAGS="$DFLAGS -DROMEM"
+fi
+
+read -p "--=={ Press Enter to Continue. }"
+clear;
+
+#
+echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+Saint Michael can opperate in a quiet mode. In this mode
+no output will be generated except in extreme emergencies.
+
+The less we record directly into dmesg, the less information
+we give to a potential attacker. 
+
+"
+read -p "Should Saint Michael opperate in Quiet mode? (y)es/(N)o ? " RE
+
+if  [ "$RE" == "Y" ] || [ "$RE" == "y" ] || [ "$RE" == "yes" ]; then
+	DFLAGS="$DFLAGS -DSILENT"
+fi
+
+
+read -p "--=={ Press Enter to Continue. }"
+clear;
+
+
+#
+# End of Options for opperation in Normal Mode.
+#
+echo -e "\
+\t\t*** Saint Michael Linux Kernel Module $VERSION ***
+
+End of Interactive Questions. Evaluating your system to Determine
+other compile time options.
+
+"
+
+
+#
+echo -n "Looking for kgcc... "
+if [ -e /usr/bin/kgcc ] || [ -e /usr/local/bin/kgcc ]; then
+    echo "found"
+else
+    echo "not found, using gcc"
+    CC="gcc"
+fi
+
+echo -n "Checking for SMP kernel... "
+/bin/grep -q smp_num_cpus /proc/ksyms
+if [ "$?" == "0" ]; then
+	echo -e "The System is SMP."
+	DFLAGS="$DFLAGS -DSMP"
+else
+	echo -e "The System is NOT SMP."
+fi
+
+echo -n "Checking for Include Files..."
+if [ -d /lib/modules/`uname -r`/build/include ];
+then
+	echo -n "Include Files are in /lib/modules/`/bin/uname -r`/build/include"
+	IVER=`/bin/uname -r`
+	IDIR="/lib/modules/$IVER/build/include"
+	IFLAGS="-I/lib/modules/$IVER/build/include"
+else
+	echo -n "Build directory for include files not found."
+	echo -n "Using /usr/src/linux/include as default."
+	echo -n "If this is not correct for your system, modify Makefile.in "
+	echo -n "directly and edit the IFLAGS setting. "
+        IFLAGS="-I/usr/src/linux/include"
+fi
+
+if [ "$SYMGRAB" == "yes" ]; 
+then
+
+rm -f $StMichael_Ref
+
+if [ -r /System.map ];
+then
+SYSMAP="/System.map"
+elif [ -f /boot/System.map-`uname -r` ];
+then
+SYSMAP="/boot/System.map-`uname -r`"
+else
+SYSMAP="/System.map";
+fi
+
+
+echo "Using $SYSMAP.\n"
+
+FS_TYPE="`mount | grep \" / \" | cut -d \" \" -f 5`";
+
+#if [ "$FS_TYPE" == "ext3" ] || [ "$FS_TYPE" == "ext2" ]; 
+if [ "$FS_TYPE" == "ext2" ]; 
+then
+EXT_FILE_OPS=`grep $FS_TYPE $SYSMAP | grep _file_operations | cut -b 1-8`
+echo `grep $FS_TYPE $SYSMAP | grep _file_operations`
+echo "#define EXT_FILE_OPS 0x$EXT_FILE_OPS" >> $StMichael_Ref
+EXT_DIR_OPS=`grep $FS_TYPE $SYSMAP | grep _dir_operations | cut -b 1-8`
+echo `grep $FS_TYPE $SYSMAP | grep _dir_operations`
+echo "#define EXT_DIR_OPS 0x$EXT_DIR_OPS" >> $StMichael_Ref
+EXT_SUPER_OPS=`grep $FS_TYPE $SYSMAP | grep _sops | cut -b 1-8`
+echo `grep $FS_TYPE $SYSMAP | grep _sops`
+echo "#define EXT_SUPER_OPS 0x$EXT_SUPER_OPS" >> $StMichael_Ref
+fi
+PROC_FILE_OPS=`grep proc_ksyms_operation $SYSMAP | cut -b 1-8`
+echo `grep proc_ksyms_operations $SYSMAP`
+echo "#define PROC_FILE_OPS 0x$PROC_FILE_OPS" >> $StMichael_Ref
+PROC_DIR_OPS=`grep proc_dir_operations $SYSMAP | cut -b 1-8`
+echo `grep proc_dir_operations $SYSMAP` 
+echo "#define PROC_DIR_OPS 0x$PROC_DIR_OPS" >> $StMichael_Ref
+PROC_SUPER_OPS=`grep proc_sops $SYSMAP | cut -b 1-8`
+echo `grep proc_sops $SYSMAP `
+echo "#define PROC_SUPER_OPS 0x$PROC_SUPER_OPS" >> $StMichael_Ref
+PROC_DENT_OPS=`grep proc_dentry_operations $SYSMAP | cut -b 1-8`
+echo `grep proc_dentry_operations $SYSMAP` 
+echo "#define PROC_DENT_OPS 0x$PROC_DENT_OPS" >> $StMichael_Ref
+SYM_KMEM_FOPS=`grep kmem_fops $SYSMAP | cut -b 1-8`
+echo "#define SYM_KMEM_FOPS 0x$SYM_KMEM_FOPS" >> $StMichael_Ref
+SYM_MEM_FOPS=`grep mem_fops $SYSMAP |cut -b 1-8`
+echo "#define SYM_MEM_FOPS 0x$SYM_MEM_FOPS" >> $StMichael_Ref
+
+fi
+
+#touch StMichael_Ref.h
+
+echo " "
+
+grep -q timer_t $IDIR/linux/timer.h
+
+if [ $? == 0 ]
+then
+	echo -n "We appear to have timer_t defined. We don't need ours then."
+        DFLAGS="$DFLAGS -DGOT_TIME"
+fi
+
+echo " "
+
+uname -r | grep -q ac
+
+if [ $? == 0 ]
+then
+	echo -n "It appears your running an Alan Cox Kernel. "
+	DFLAGS="$DFLAGS -DAC_KERNEL"
+fi
+
+
+echo -n > src/Makefile.in
+echo "CC = $CC" >> src/Makefile.in
+echo "DFLAGS = $DFLAGS" >> src/Makefile.in
+echo "MFLAGS = $MFLAGS" >> src/Makefile.in
+echo "IFLAGS = $IFLAGS" >> src/Makefile.in
+echo "VERSION = $VERSION" >> src/Makefile.in
+echo -e "\nNow type 'make'"

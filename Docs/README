@@ -1,0 +1,168 @@
+
+
+StMichael is a LKM that attempts to provide a level of protection
+against kernel-module rootkits. It provides this protection by
+monitoring various portions of the kernel, and optionally the
+entire kernel text itself, for modifications that may indicate
+the presence of a malicious kernel module.
+
+If rootkit-like activity is detected, StMichael will attempt
+to recover the kernel's integrity by rolling back the changes
+made to a previously known-good state. 
+
+The following is a brief list of the capabilities of the StMichael
+kernel module:
+ 
+     -- Can generate and check  MD5, and optionally SHA1, checksum
+        of various kernel data structures, such as the system call
+	table, and filesystem call out structures
+
+     -- Can checksum (md5 only) the base kernel, and detect modifications
+        to the kernel text such as would occur during a silvo-type attack.
+
+     -- Can backup a copy of the kernel, storing it in a weekly encrypted
+        form, for later restoration if a catastrophic kernel compromise 
+	is detected.
+	
+     -- Can detect the presense of simplistic kernel rootkits upon
+        loading.
+
+     -- Can modify the linux kernel to protect immutable files
+        from having their immutable attribute removed.
+
+     -- Can disable write-access to kernel memory through the
+        /dev/kmem device.
+
+     -- Can conceal the Stmichael module and its symbols.
+
+     -- Can monitor kernel modules being loaded and unloaded to
+        detect attempts to conceal the module and its symbols, and
+	attempt to 'reveal' the hidden module.
+
+
+*************************************************************************
+NOTICE: This is experimental software. As such it may cause your kernel
+        to crash, particularly when deployed on systems with non-standard
+	kernel patches or kernel modules.
+	
+	These non-standard patches include modifications made by
+	major distributions, additional security pactches, as
+	well as any home-brew patches you may use.
+	
+	If you experience problems with StMichael and a non-standard
+	patch or kernel module, contact the author, and together
+	we can attempt to isolate and rectify the conflit.
+*************************************************************************
+
+	
+Installation
+------------
+
+The Saint Michael kernel module needs to be configured prior to
+its building. The "./configure" script is included to generate
+the configuraton for the StMichael kernel module.
+
+After running "./configure" your configuration will be stored
+in a "Makefile.in" file. This file is called by the Makefile
+to set the definitions that control the compilation process.
+
+Once the Makefile.in file has been generated, run "make" to
+build the kernel module.
+
+**WARNING: It is strongly recommended the following command not be done
+**WARNING: on systems opperating in a production mode. If there are 
+**WARNING: incompatabilities between the running kernel and StMichael,
+**WARNING: the entire system could crash or become unstable.
+
+**NOTE: Once Loaded, StMichael does not have any mechinism
+**NOTE: that may be used to unload it. This has been done 
+**NOTE: on purpose. To remove StMichael, it will be necessary
+**NOTE: to reboot the system.
+
+To test the module, run "insmod ./StMichael.o"
+
+This will load the StMichael kernel module with the configuration
+defined earlier.
+
+If everything appears to work properly, you may want to play
+with some of the DEMO attack scripts.
+
+**WARNING: Do not run the DEMO attack scripts on a production system.
+**WARNING: Some of the demo attacks modify the kernel in ways that
+**WARNING: could cause the system to become unstable if StMichael is
+**WARNING: not loaded or not opperating properly.
+
+When deploying StMichael in a system, the module should be loaded
+at the first possible moment. One way of doing this would be to 
+load the module prior to entering the initial runlevel. This is
+acomplished by adding the following line to /etc/inittab, and assumes 
+that the compiled StMichael.o file has been copied to /lib/modules.
+
+sm:35:once:/sbin/insmod /lib/modules/StMichael.o
+
+**NOTE: This line should be added before the rc.sysinit script runs.
+
+After loading, StMichael will output events to the kernel logging
+facility. 
+
+Issues and Incompatabilities
+----------------------------
+
+This section documents known issues and incompatabilities between
+Stmichael and other kernel patches and modules. It is my hope
+that this listing will shrink, as others and myself have a chance
+to review and debug the issues.
+
+1. PCMCIA-CS
+
+   There have been some issues with PCMCIA-CS and StMichael. The
+   issue seems to be that loading the pcmcia-cs modules into the
+   kernel modifies the system calll table. These are legitimate
+   modifications.
+
+   Simularly, removing the pcmcia modules from the kernel (even autoclean)
+   would remove these system calls.
+
+   In the first case, the effect of StMicheal flagging these
+   as rootkit activity and reversing the changes has little
+   effect other then disabling the pcmcia subsystem.
+
+   In the latter case, the effects can be catastrophic. If
+   calls are made to the system call -- the function that
+   is in the sys_call_table points to unallocated portions
+   of ram. The effects of calling this can range from OOps-ing
+   the system to a potental avenue for malicious code to 
+   be executed.
+
+   To exploit this, malicious code would have to be overlayed
+   on top of the exact place where the original pcmcia functions
+   were. This should be considered difficult to non-trivial, but 
+   possible.
+
+   It is not recommended, at this time, to use StMichael on
+   a laptop that loads kernel modules for PCMCIA support,
+   or any other service that installs or removes new
+   system calls.
+
+2. GrSecurity
+
+   If StMichael is loaded on a system that is using a grate security
+   kernel patch, StMichael may Oops. This Oops occurs on kernel load.
+
+   At this time, the cause of the problem is unknown. 
+
+3. -ac kernels.
+
+   The alan cox kernel serise seems to be making modifications
+   to the 2.4.XX memory manager. These modifications may conflict
+   with StMichael, and cause it to fail to compile.
+
+   StMichael 0.10 has been modified to work with the
+   2.4.19-pre3-ac3 kernel patch. The compile time option,
+   -DACKERNEL, turns on this support.
+
+   Depending on the changes in future ac kernels, other
+   issues may crop up. I do not monitor the ac kernels,
+   so if you run an -ac and experience problems -- let me
+   know. I will be glad to work with you to identify the issue.
+

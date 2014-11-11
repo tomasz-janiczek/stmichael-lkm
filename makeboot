@@ -1,0 +1,8 @@
+kernelversion=`uname -r`
+
+cp -f bin/StMichael.o /lib/modules/$kernelversion/kernel/drivers
+depmod -a
+cd /boot/
+rm -f initrd.img
+mkinitrd --with=StMichael initrd.img $kernelversion
+lilo

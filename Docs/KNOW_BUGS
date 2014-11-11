@@ -1,0 +1,1 @@
+- when sm_init_timer() is called into kernel_integrity_check the stmichael module causes a kpanic - if not all the options are active (maybe another function definition problem, when you points a wrapper to that and it isnt defined because an ifdef)

@@ -1,0 +1,14 @@
+
+Before making the package, Edit the Makefile and Uncomment the line:
+
+CC=kgcc
+
+And Comment out the line:
+
+CC=gcc
+
+Redhat 7.0 shipped with a broken GCC compiler that would not properly
+compile kernel code. The Kgcc compiler is an older gcc compiler for
+the sole purpose of compiliing kernel code.
+
+

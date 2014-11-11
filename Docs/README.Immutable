@@ -1,0 +1,69 @@
+
+This file contains a list of files recommended to be
+set immutable, when using Saint Michael. This list
+is based on a Redhat 7.1 system. You may need to
+add, remove, or change in this list to fit your system.
+
+If you have another system, and wish to compile a simular
+list for disturbutions, mail your list to lawless@wwjh.net
+
+The goal of this list is to have every file that is used prior to
+the actual loading of the Saint Michael LKM be set immutable.
+
+To do such, simply run
+   chattr +i filename
+
+If you need to upgrade, go into single user mode, "chattr -i" the
+filenames you need to replace, replace them,  then "chattr +i" the
+replacement files.
+
+The File list includes:
+
+--The kernel images listed in /etc/lilo.conf, for example:
+
+  /boot/*vmlinuz*
+  /boot/*System.map*
+  /vmlinuz*
+  /System.map*
+
+	If do you use GRUB, set as immutable all files at /boot/grub directory
+
+--The configuration files that effect the loading of the kernel
+
+  /etc/lilo.conf
+
+--The Binary Programs that are Run by the Kernel, prior to and
+  during the load os Saint Michael
+
+  /sbin/insmod
+  /sbin/init
+
+--The Configuration Files used by these programs
+
+  /etc/inittab   
+   
+--The Libraries the Programs Use.
+
+  /lib/libc.* 
+  /lib/libc-*
+  /lib/ld-*
+  /lib/i[3456]86/libc*
+  
+--Configuration files for the Linker.
+
+  /etc/ld.so.conf
+
+--Create (if necessary) and Set to immutable to
+
+  /etc/ld.so.preload
+  
+  by doing:
+
+  touch /etc/ld.so.preload
+  chattr +i /etc/ld.so.preload
+
+  The preload configuration file may be used to introduce malicious libraries 
+  into the preload sequence of dynamicly linked programs. This is bad.
+
+--Please, set as immutable all modules located at /lib/modules/`uname -r`
+
